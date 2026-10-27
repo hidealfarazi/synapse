@@ -25,8 +25,8 @@ Next.js App Router + TypeScript (strict), plain CSS classes prefixed `rn-` in ap
 2. Konten tetap BORDERLESS (tanpa kartu/kotak). Kontrol interaktif (tombol, chip, kolom input) BOLEH berupa kotak bersudut membulat 12px dengan keadaan hover/fokus/aktif yang jelas. Lihat DESIGN.md.
 3. Use existing CSS variables and `rn-` classes. No new colors. No decorative effects.
 4. Video hujan HANYA di hero halaman Hari Ini (memudar ke latar polos saat scroll).
-   Halaman lain berlatar polos + lapisan hujan tipis `components/RainLayer.tsx` (garis 1px,
-   opasitas <= 0.2, tanpa glow; ikut toggle Atmosfer Hujan & prefers-reduced-motion).
+   Halaman lain berlatar polos + video latar `components/RainLayer.tsx` (/video/login.mp4 untuk login,
+   /video/pages.mp4 untuk lainnya; redup, ikut toggle Atmosfer Hujan & prefers-reduced-motion).
    Jangan menambah efek lain. Tanpa aksara Jawa, tulisan Jawa, motif batik, atau kanji.
 5. Keep ALL data access behind `lib/repo.ts` (mock now, Supabase later). Pages never call a DB directly.
 6. Do NOT touch auth, RLS, Supabase config, env files, or API keys unless the task explicitly says so.

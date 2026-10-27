@@ -31,4 +31,4 @@ Bold, calm, personal, borderless. Deep near-black, giant grotesk type, single st
 ## Auth & Atmosfer
 - Login lewat `/login` (email + kata sandi, Supabase). Gerbang halaman di `proxy.ts`, gerbang data di RLS (`supabase/migrations`).
 - Semua data per akun lewat `lib/repo.ts`; akun baru mulai kosong (empty state, bukan data contoh).
-- Halaman selain Hari Ini: hujan tipis (`RainLayer`), 1px, opasitas <= 0.2, berhenti saat tab tersembunyi/reduced-motion/toggle mati.
+- Halaman selain Hari Ini: video latar redup (`RainLayer`): login.mp4 untuk /login, pages.mp4 untuk lainnya; berhenti saat tab tersembunyi/reduced-motion/saveData/toggle mati.

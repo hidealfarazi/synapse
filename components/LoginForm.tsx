@@ -64,7 +64,8 @@ function AuthField(props: {
           alignItems: "center",
           height: 52,
           borderRadius: 12,
-          background: "rgba(255, 255, 255, 0.04)",
+          background: "rgba(11, 13, 16, 0.5)",
+          backdropFilter: "blur(6px)",
           border: focused ? "1px solid var(--rn-accent)" : "1px solid rgba(255, 255, 255, 0.12)",
           boxShadow: focused ? "0 0 0 3px rgba(143, 163, 191, 0.18)" : "none",
           padding: "0 6px 0 16px",
@@ -169,10 +170,12 @@ export function LoginForm({ initialError }: { initialError?: string }) {
         color: "var(--rn-text)",
         minHeight: "100dvh",
         padding: "2.5rem 1.5rem 4rem",
-        maxWidth: "36rem",
+        maxWidth: "30rem",
+        width: "100%",
         margin: "0 auto",
         display: "flex",
         flexDirection: "column",
+        justifyContent: "center",
         gap: "2rem",
       }}
     >
@@ -229,23 +232,15 @@ export function LoginForm({ initialError }: { initialError?: string }) {
         </Button>
       </form>
 
-      <button
-        type="button"
-        onClick={switchMode}
-        style={{
-          alignSelf: "flex-start",
-          minHeight: 44,
-          fontFamily: "var(--font-mono, monospace)",
-          fontSize: "0.75rem",
-          letterSpacing: "0.08em",
-          textTransform: "uppercase",
-          color: "var(--rn-accent)",
-          textDecoration: "underline",
-          textUnderlineOffset: "4px",
-        }}
-      >
+      <div style={{ display: "flex", alignItems: "center", gap: "1rem" }} aria-hidden="true">
+        <span style={{ flex: 1, height: 1, background: "rgba(143, 163, 191, 0.2)" }} />
+        <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: "0.6875rem", letterSpacing: "0.12em", color: "var(--rn-muted)" }}>ATAU</span>
+        <span style={{ flex: 1, height: 1, background: "rgba(143, 163, 191, 0.2)" }} />
+      </div>
+
+      <Button variant="secondary" onClick={switchMode} disabled={busy} style={{ width: "100%" }}>
         {isSignup ? "Sudah punya akun? Masuk" : "Belum punya akun? Daftar"}
-      </button>
+      </Button>
     </div>
   );
 }
