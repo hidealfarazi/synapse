@@ -1,0 +1,321 @@
+/* =============================================================
+   Direction A — Quiet Grotesk
+   Palette:
+     --a-bg:      #0E0E0E
+     --a-text:    #FFFFFF
+     --a-muted:   #666666
+     --a-accent:  #6B8CAE  (steel-blue — ONE accent only)
+     --a-line:    #333333  (hairlines)
+   ============================================================= */
+
+.root {
+  --a-bg:     #0E0E0E;
+  --a-text:   #FFFFFF;
+  --a-muted:  #666666;
+  --a-accent: #6B8CAE;
+  --a-line:   #333333;
+
+  background: var(--a-bg);
+  color: var(--a-text);
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-display), sans-serif;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* ── Vertical edge text (desktop only) ── */
+.edgeText {
+  display: none;
+  position: fixed;
+  right: 1.25rem;
+  top: 50%;
+  transform: translateY(-50%) rotate(90deg);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.625rem;
+  letter-spacing: 0.25em;
+  color: var(--a-muted);
+  white-space: nowrap;
+  user-select: none;
+  pointer-events: none;
+}
+
+@media (min-width: 768px) {
+  .edgeText {
+    display: block;
+  }
+}
+
+/* ── Main content ── */
+.main {
+  flex: 1;
+  padding: 3rem 1.5rem 7rem;
+  max-width: 36rem;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+@media (min-width: 768px) {
+  .main {
+    padding: 4rem 2rem 7rem;
+    max-width: 44rem;
+  }
+}
+
+/* ── Section label row ── */
+.sectionLabel {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  animation: revealUp 0.6s ease-out both;
+}
+
+.counter {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  color: var(--a-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.hairline {
+  flex: 1;
+  height: 1px;
+  background: var(--a-line);
+}
+
+.sectionName {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  color: var(--a-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Giant greeting ── */
+.greetingBlock {
+  animation: revealUp 0.6s 0.1s ease-out both;
+}
+
+.greeting {
+  font-size: clamp(3rem, 14vw, 6rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  display: inline;
+}
+
+/* Signature interaction: CSS selection-box outline on the first letter */
+.firstLetter {
+  display: inline-block;
+  position: relative;
+  transition: outline-offset 0.2s ease;
+  outline: 1.5px solid transparent;
+  outline-offset: 2px;
+}
+
+/* Always-on subtle box — mimics design-tool selection handle */
+.firstLetter::before,
+.firstLetter::after {
+  content: "";
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  background: var(--a-accent);
+  opacity: 0.9;
+}
+
+.firstLetter::before {
+  top: -2px;
+  left: -2px;
+}
+
+.firstLetter::after {
+  bottom: -2px;
+  right: -2px;
+}
+
+.greeting:hover .firstLetter,
+.greeting:focus-within .firstLetter {
+  outline-color: var(--a-accent);
+  outline-offset: 4px;
+}
+
+.dateLabel {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  color: var(--a-muted);
+  margin-top: 0.75rem;
+  text-transform: capitalize;
+}
+
+/* ── AI brief ── */
+.aiBrief {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.8125rem;
+  color: var(--a-muted);
+  line-height: 1.6;
+  max-width: 30rem;
+  animation: revealUp 0.6s 0.2s ease-out both;
+}
+
+/* ── Assignment rows ── */
+.rowList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.row {
+  padding: 1.25rem 0;
+  border-bottom: 1px solid var(--a-line);
+  transition: transform 0.18s ease;
+  animation: revealUp 0.6s 0.25s ease-out both;
+}
+
+.row:first-child {
+  border-top: 1px solid var(--a-line);
+}
+
+@media (hover: hover) {
+  .row:hover {
+    transform: translateX(8px);
+  }
+}
+
+.rowMuted {
+  opacity: 0.55;
+}
+
+.rowTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.4rem;
+}
+
+.subject {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  color: var(--a-accent);
+  text-transform: uppercase;
+}
+
+.dueTime {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.6875rem;
+  color: var(--a-muted);
+  letter-spacing: 0.05em;
+}
+
+.urgent {
+  color: #C23B2A !important; /* seal red — only for <1hr urgency */
+}
+
+.rowTitle {
+  font-size: clamp(1rem, 3.5vw, 1.25rem);
+  font-weight: 700;
+  line-height: 1.25;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.02em;
+}
+
+/* ── Progress line ── */
+.progressTrack {
+  height: 1px;
+  background: var(--a-line);
+  position: relative;
+}
+
+.progressFill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 1px;
+  background: var(--a-accent);
+  animation: lineGrow 0.9s 0.3s ease-out both;
+}
+
+/* ── Bottom nav ── */
+.nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  border-top: 1px solid var(--a-line);
+  background: var(--a-bg);
+  z-index: 10;
+}
+
+.navItem {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  min-height: 56px;
+  padding: 0.5rem 0;
+  color: var(--a-muted);
+  transition: color 0.15s ease;
+}
+
+.navItem:active {
+  color: var(--a-text);
+}
+
+.navActive {
+  color: var(--a-accent);
+}
+
+.navIcon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.navLabel {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.5625rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* ── Animations ── */
+@keyframes revealUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes lineGrow {
+  from {
+    width: 0 !important;
+  }
+  to {
+    /* width is set by inline style */
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root *,
+  .root *::before,
+  .root *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

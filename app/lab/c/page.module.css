@@ -1,0 +1,352 @@
+/* =============================================================
+   Direction C — Hybrid
+   Palette:
+     --c-bg:      #121212  (dark studio)
+     --c-text:    #F0E8DC  (warm cream)
+     --c-muted:   #888888
+     --c-accent:  #C4954A  (gold-copper)
+     --c-white:   #FFFFFF  (focal numerals only)
+   ============================================================= */
+
+.root {
+  --c-bg:     #121212;
+  --c-text:   #F0E8DC;
+  --c-muted:  #888888;
+  --c-accent: #C4954A;
+  --c-white:  #FFFFFF;
+
+  background: var(--c-bg);
+  color: var(--c-text);
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* ── Main content ── */
+.main {
+  flex: 1;
+  padding: 3rem 1.5rem 7rem;
+  max-width: 36rem;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+@media (min-width: 768px) {
+  .main {
+    max-width: 72rem;
+    padding: 4rem 3rem 7rem;
+    gap: 2.5rem;
+  }
+}
+
+/* ── Top strip ── */
+.topStrip {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  animation: revealUp 0.5s ease-out both;
+}
+
+.dirLabel {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.6875rem;
+  letter-spacing: 0.15em;
+  color: var(--c-muted);
+}
+
+.dateLabel {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  color: var(--c-muted);
+  text-transform: capitalize;
+}
+
+/* ── Serif greeting ── */
+.greetingBlock {
+  animation: revealUp 0.6s 0.08s ease-out both;
+}
+
+.greeting {
+  font-family: var(--font-serif), serif;
+  font-size: clamp(2.75rem, 11vw, 5rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--c-text);
+}
+
+/* ── AI brief ── */
+.aiBrief {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.8125rem;
+  color: var(--c-muted);
+  line-height: 1.6;
+  max-width: 32rem;
+  animation: revealUp 0.6s 0.15s ease-out both;
+}
+
+/* ── Hairline divider with center dot ── */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  animation: revealUp 0.5s 0.2s ease-out both;
+}
+
+.dividerLine {
+  flex: 1;
+  height: 1px;
+  background: rgba(240, 232, 220, 0.12);
+}
+
+.dividerDot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--c-accent);
+  flex-shrink: 0;
+}
+
+/* ── Two-column layout (desktop) ── */
+.columns {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+@media (min-width: 768px) {
+  .columns {
+    flex-direction: row;
+    gap: 4rem;
+    align-items: flex-start;
+  }
+
+  .column {
+    flex: 1;
+  }
+}
+
+/* ── Section heading ── */
+.sectionHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  animation: revealUp 0.6s 0.22s ease-out both;
+}
+
+.sectionTitle {
+  font-family: var(--font-serif), serif;
+  font-size: clamp(1.5rem, 5vw, 2.25rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--c-text);
+}
+
+.sectionCount {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  color: var(--c-muted);
+}
+
+/* ── Assignment rows ── */
+.rowList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.row {
+  padding: 1.5rem 0;
+  border-bottom: 1px solid rgba(240, 232, 220, 0.08);
+  transition: transform 0.18s ease;
+  animation: revealUp 0.6s ease-out both;
+}
+
+.row:first-child {
+  border-top: 1px solid rgba(240, 232, 220, 0.08);
+}
+
+@media (hover: hover) {
+  .row:hover {
+    transform: translateX(6px);
+  }
+}
+
+.rowMuted {
+  opacity: 0.45;
+}
+
+/* ── Oversized flip numeral — the HERO element ── */
+.flipNumeral {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: clamp(3.5rem, 18vw, 7.5rem);
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+  color: var(--c-white);
+  /* Perspective flip animation on mount */
+  animation: flipIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-origin: top center;
+  display: block;
+  margin-bottom: 0.625rem;
+}
+
+@media (min-width: 768px) {
+  .flipNumeral {
+    font-size: clamp(4rem, 10vw, 9rem);
+  }
+}
+
+.urgentNumeral {
+  color: #C23B2A; /* seal red — only for <1hr urgency */
+}
+
+.rowContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.subject {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  color: var(--c-accent);
+  text-transform: uppercase;
+}
+
+.urgent {
+  color: #C23B2A !important;
+}
+
+.rowTitle {
+  font-family: var(--font-serif), serif;
+  font-size: clamp(0.9375rem, 3vw, 1.1875rem);
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--c-text);
+}
+
+/* ── Progress line with dot ── */
+.progressTrack {
+  height: 1px;
+  background: rgba(240, 232, 220, 0.1);
+  position: relative;
+  margin-top: 0.5rem;
+}
+
+.progressFill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 1px;
+  background: var(--c-accent);
+  animation: lineGrow 0.9s 0.4s ease-out both;
+}
+
+.progressDot {
+  position: absolute;
+  top: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--c-accent);
+  transform: translate(-50%, -50%);
+}
+
+/* ── Bottom nav ── */
+.nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  border-top: 1px solid rgba(240, 232, 220, 0.08);
+  background: var(--c-bg);
+  z-index: 10;
+}
+
+.navItem {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  min-height: 56px;
+  padding: 0.5rem 0;
+  color: var(--c-muted);
+  transition: color 0.15s ease;
+}
+
+.navItem:active {
+  color: var(--c-text);
+}
+
+.navActive {
+  color: var(--c-accent);
+}
+
+.navIcon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.navLabel {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.5625rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* ── Animations ── */
+@keyframes revealUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Split-flap: rotateX from 90° → 0° with perspective */
+@keyframes flipIn {
+  from {
+    opacity: 0;
+    transform: perspective(500px) rotateX(90deg);
+  }
+  to {
+    opacity: 1;
+    transform: perspective(500px) rotateX(0deg);
+  }
+}
+
+@keyframes lineGrow {
+  from {
+    width: 0 !important;
+  }
+  to {
+    /* width set by inline style */
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root *,
+  .root *::before,
+  .root *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

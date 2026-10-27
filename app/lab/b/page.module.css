@@ -1,0 +1,341 @@
+/* =============================================================
+   Direction B — Ink & Batik
+   Palette:
+     --b-bg:      #080605  (deepest sumi-black)
+     --b-text:    #EFE6D2  (parchment)
+     --b-muted:   #A89F8C
+     --b-gold:    #C9A24B
+     --b-batik:   #1E1810  (indigo-black, batik contrast)
+   ============================================================= */
+
+.root {
+  --b-bg:    #080605;
+  --b-text:  #EFE6D2;
+  --b-muted: #A89F8C;
+  --b-gold:  #C9A24B;
+  --b-batik: #1E1810;
+
+  background: var(--b-bg);
+  color: var(--b-text);
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-serif), serif;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* ── Kawung repeating motif ── */
+/*
+  Kawung is four overlapping circles in a grid.
+  Built as an inline SVG data-URI background at 4% opacity.
+  The SVG draws one kawung unit (40×40px).
+*/
+.kawung {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Ccircle cx='10' cy='20' r='8' fill='none' stroke='%23C9A24B' stroke-width='0.75'/%3E%3Ccircle cx='30' cy='20' r='8' fill='none' stroke='%23C9A24B' stroke-width='0.75'/%3E%3Ccircle cx='20' cy='10' r='8' fill='none' stroke='%23C9A24B' stroke-width='0.75'/%3E%3Ccircle cx='20' cy='30' r='8' fill='none' stroke='%23C9A24B' stroke-width='0.75'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 40px 40px;
+}
+
+/* ── Main content ── */
+.main {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  padding: 3rem 1.5rem 7rem;
+  max-width: 36rem;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2.25rem;
+}
+
+@media (min-width: 768px) {
+  .main {
+    padding: 4.5rem 2rem 7rem;
+    max-width: 44rem;
+  }
+}
+
+/* ── Top strip ── */
+.topStrip {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  animation: revealUp 0.6s ease-out both;
+}
+
+.counter {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  color: var(--b-muted);
+}
+
+.topRight {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  color: var(--b-muted);
+}
+
+/* ── Giant serif greeting ── */
+.greetingBlock {
+  animation: revealUp 0.7s 0.1s ease-out both;
+}
+
+.greeting {
+  font-size: clamp(2.75rem, 12vw, 5.5rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--b-text);
+}
+
+.dateLabel {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  color: var(--b-muted);
+  margin-top: 0.75rem;
+  text-transform: capitalize;
+}
+
+/* ── AI brief ── */
+.aiBrief {
+  font-style: italic;
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--b-muted);
+  max-width: 28rem;
+  animation: revealUp 0.6s 0.2s ease-out both;
+}
+
+/* ── Animated brush hairline (SVG) ── */
+.brushLine {
+  width: 100%;
+  height: 2px;
+  overflow: visible;
+  animation: revealUp 0.5s 0.25s ease-out both;
+}
+
+.brushStroke {
+  stroke-dasharray: 320;
+  stroke-dashoffset: 320;
+  animation: drawLine 1s 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes drawLine {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* ── Section label (kanji + Indonesian) ── */
+.sectionLabel {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  animation: revealUp 0.6s 0.3s ease-out both;
+}
+
+.kanji {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--b-gold);
+  line-height: 1;
+}
+
+.sectionName {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  color: var(--b-muted);
+}
+
+/* ── Assignment rows ── */
+.rowList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.row {
+  padding: 1.25rem 0;
+  border-bottom: 1px solid rgba(168, 159, 140, 0.2);
+  transition: transform 0.18s ease;
+  animation: revealUp 0.6s 0.35s ease-out both;
+}
+
+.row:first-child {
+  border-top: 1px solid rgba(168, 159, 140, 0.2);
+}
+
+@media (hover: hover) {
+  .row:hover {
+    transform: translateX(8px);
+  }
+  .row:hover .subject {
+    color: var(--b-gold);
+  }
+}
+
+.rowMuted {
+  opacity: 0.5;
+}
+
+.rowTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.4rem;
+}
+
+.subject {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  color: var(--b-gold);
+  text-transform: uppercase;
+  transition: color 0.15s ease;
+}
+
+.dueTime {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.6875rem;
+  color: var(--b-muted);
+  letter-spacing: 0.05em;
+}
+
+.urgent {
+  color: #C23B2A !important;
+}
+
+.rowTitle {
+  font-size: clamp(1rem, 3.5vw, 1.375rem);
+  font-weight: 800;
+  line-height: 1.25;
+  margin-bottom: 0.875rem;
+  letter-spacing: -0.01em;
+  color: var(--b-text);
+}
+
+/* ── Gold diamond progress ── */
+.progressWrap {
+  position: relative;
+}
+
+.progressTrack {
+  height: 1px;
+  background: rgba(168, 159, 140, 0.25);
+  position: relative;
+}
+
+.progressFill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 1px;
+  background: var(--b-gold);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  animation: lineGrow 0.9s 0.4s ease-out both;
+}
+
+/* Diamond ornament at end of progress line */
+.diamond {
+  display: block;
+  width: 5px;
+  height: 5px;
+  background: var(--b-gold);
+  transform: rotate(45deg) translateX(50%);
+  flex-shrink: 0;
+  margin-top: -2px;
+}
+
+/* ── Bottom nav ── */
+.nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  border-top: 1px solid rgba(168, 159, 140, 0.2);
+  background: var(--b-bg);
+  z-index: 10;
+}
+
+.navItem {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  min-height: 56px;
+  padding: 0.5rem 0;
+  color: var(--b-muted);
+  transition: color 0.15s ease;
+}
+
+.navItem:active {
+  color: var(--b-text);
+}
+
+.navActive {
+  color: var(--b-gold);
+}
+
+.navIcon {
+  font-size: 1rem;
+  line-height: 1;
+  font-family: var(--font-serif), serif;
+}
+
+.navLabel {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.5625rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* ── Animations ── */
+@keyframes revealUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes lineGrow {
+  from {
+    width: 0 !important;
+  }
+  to {
+    /* width set by inline style */
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root *,
+  .root *::before,
+  .root *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+  .brushStroke {
+    stroke-dashoffset: 0 !important;
+  }
+}
