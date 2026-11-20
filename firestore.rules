@@ -1,0 +1,11 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Keamanan data per akun:
+    // Setiap dokumen pengguna disimpan di jalur /users/{userId}/...
+    // Hanya pengguna yang terautentikasi dan memiliki UID yang sama yang bisa membaca/menulis datanya.
+    match /users/{userId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}

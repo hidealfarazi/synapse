@@ -1,50 +1,94 @@
 "use client";
 
-import { supabase } from "@/lib/supabase/client";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+  deleteDoc,
+  query,
+  where,
+} from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth, db } from "@/lib/firebase/client";
 import type { Assignment, ChecklistItem, ChecklistKind, Checkpoint, Material } from "./types";
 import type { LearningFocus, SkillNode } from "./mock/learning";
 import type { Recommendation } from "./ai/types";
 
-// Data is always read from the signed-in account. No shared fallback or seed data.
+// Data disimpan per akun pengguna di jalur /users/{userId}/{table}/{id}.
+// Aturan Firestore Rules menjaga agar akun lain tidak bisa membaca/menulis data ini.
 type Entity = "assignments" | "checklist_items" | "checkpoints" | "materials" | "learning_focus" | "skill_nodes" | "recommendations";
 type Row<T> = { id: string; user_id: string; payload: T; day?: string; parent_type?: string; parent_id?: string };
 
-// ID akun diambil dari klaim JWT yang diverifikasi (lokal, tanpa 1 request jaringan per query).
-// RLS di database tetap jadi penjaga utama: baris akun lain tidak akan pernah terbaca/tertulis.
-async function account() {
-  const { data, error } = await supabase.auth.getClaims();
-  if (error) throw error;
-  const id = data?.claims?.sub;
-  if (!id) throw new Error("Sign in required");
-  return id;
+// Mengambil ID akun yang sedang login. Menunggu inisialisasi state bila diperlukan.
+async function account(): Promise<string> {
+  if (auth.currentUser?.uid) return auth.currentUser.uid;
+  return new Promise((resolve, reject) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      unsubscribe();
+      if (user?.uid) resolve(user.uid);
+      else reject(new Error("Sign in required"));
+    });
+  });
 }
 
-function checked<T>(result: { data: T; error: { message: string } | null }): T {
-  if (result.error) throw new Error(result.error.message);
-  return result.data;
+// Menghapus nilai undefined dan mengubah objek menjadi JSON murni yang aman bagi Firestore
+function serialize<T>(data: T): Record<string, unknown> {
+  return JSON.parse(JSON.stringify(data));
 }
 
 async function all<T>(table: Entity): Promise<Row<T>[]> {
   const user = await account();
-  return checked(await supabase.from(table).select("*").eq("user_id", user)) as Row<T>[];
+  const snap = await getDocs(collection(db, "users", user, table));
+  return snap.docs.map((docSnap) => {
+    const d = docSnap.data();
+    return {
+      id: docSnap.id,
+      user_id: user,
+      payload: d.payload as T,
+      day: d.day as string | undefined,
+      parent_type: d.parent_type as string | undefined,
+      parent_id: d.parent_id as string | undefined,
+    };
+  });
 }
 
 async function one<T>(table: Entity, id: string): Promise<Row<T> | undefined> {
   const user = await account();
-  const data = checked(await supabase.from(table).select("*").eq("user_id", user).eq("id", id).maybeSingle());
-  return (data ?? undefined) as Row<T> | undefined;
+  const snap = await getDoc(doc(db, "users", user, table, id));
+  if (!snap.exists()) return undefined;
+  const d = snap.data();
+  return {
+    id: snap.id,
+    user_id: user,
+    payload: d.payload as T,
+    day: d.day as string | undefined,
+    parent_type: d.parent_type as string | undefined,
+    parent_id: d.parent_id as string | undefined,
+  };
 }
 
 async function save<T extends { id: string }>(table: Entity, value: T, extra: Record<string, unknown> = {}): Promise<T> {
   const user = await account();
-  checked(await supabase.from(table).upsert({ id: value.id, user_id: user, payload: value, ...extra }, { onConflict: "user_id,id" }));
+  const docRef = doc(db, "users", user, table, value.id);
+  await setDoc(
+    docRef,
+    {
+      id: value.id,
+      user_id: user,
+      payload: serialize(value),
+      ...serialize(extra),
+    },
+    { merge: true }
+  );
   return value;
 }
 
 async function remove(table: Entity, id: string): Promise<boolean> {
   const user = await account();
-  const data = checked(await supabase.from(table).delete().eq("id", id).eq("user_id", user).select("id"));
-  return (data ?? []).length > 0;
+  await deleteDoc(doc(db, "users", user, table, id));
+  return true;
 }
 
 function todayKey(): string {
@@ -81,25 +125,50 @@ export function restoreAssignment(id: string) {
   return updateAssignment(id, { archivedAt: undefined, status: "todo" });
 }
 export async function deleteAssignment(id: string): Promise<boolean> {
+  const user = await account();
+  // Hapus semua checklist item yang terikat dengan tugas ini
+  const checklistCol = collection(db, "users", user, "checklist_items");
+  const checkSnap = await getDocs(query(checklistCol, where("parent_id", "==", id)));
+  await Promise.all(checkSnap.docs.map((d) => deleteDoc(d.ref)));
+
+  // Hapus semua checkpoint yang terikat dengan tugas ini
+  const checkpointCol = collection(db, "users", user, "checkpoints");
+  const cpSnap = await getDocs(query(checkpointCol, where("parent_id", "==", id)));
+  await Promise.all(cpSnap.docs.map((d) => deleteDoc(d.ref)));
+
   return remove("assignments", id);
 }
 
 export async function listChecklist(parentType: "assignment" | "material", parentId: string): Promise<ChecklistItem[]> {
   const user = await account();
-  const rows = checked(await supabase.from("checklist_items").select("*").eq("user_id", user).eq("parent_type", parentType).eq("parent_id", parentId));
-  return (rows as Row<ChecklistItem>[]).map((r) => r.payload);
+  const colRef = collection(db, "users", user, "checklist_items");
+  const q = query(
+    colRef,
+    where("parent_type", "==", parentType),
+    where("parent_id", "==", parentId)
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => d.data().payload as ChecklistItem);
 }
 export async function addChecklistItem(parentType: "assignment" | "material", parentId: string, kind: ChecklistKind, title: string): Promise<ChecklistItem> {
   const parent = parentType === "assignment" ? await getAssignment(parentId) : await one<Material>("materials", parentId);
   if (!parent) throw new Error("Parent not found");
-  const item = await save("checklist_items", { id: newId(), parentType, parentId, kind, title, done: false }, { parent_type: parentType, parent_id: parentId });
+  const item = await save(
+    "checklist_items",
+    { id: newId(), parentType, parentId, kind, title, done: false },
+    { parent_type: parentType, parent_id: parentId }
+  );
   if (parentType === "assignment") await recalculateAssignmentProgress(parentId);
   return item;
 }
 export async function toggleChecklistItem(id: string): Promise<ChecklistItem | undefined> {
   const row = await one<ChecklistItem>("checklist_items", id);
   if (!row) return undefined;
-  const item = await save("checklist_items", { ...row.payload, done: !row.payload.done }, { parent_type: row.parent_type, parent_id: row.parent_id });
+  const item = await save(
+    "checklist_items",
+    { ...row.payload, done: !row.payload.done },
+    { parent_type: row.parent_type, parent_id: row.parent_id }
+  );
   if (item.parentType === "assignment") await recalculateAssignmentProgress(item.parentId);
   return item;
 }
@@ -112,15 +181,19 @@ export async function deleteChecklistItem(id: string): Promise<boolean> {
 }
 async function recalculateAssignmentProgress(id: string) {
   const steps = (await listChecklist("assignment", id)).filter((c) => c.kind === "step");
-  const progress = steps.length ? Math.round(steps.filter((c) => c.done).length * 100 / steps.length) : 0;
+  const progress = steps.length ? Math.round((steps.filter((c) => c.done).length * 100) / steps.length) : 0;
   await updateAssignment(id, { progress, status: progress === 100 && steps.length ? "done" : progress ? "doing" : "todo" });
 }
 export async function addCheckpoint(assignmentId: string, note?: string, imagePath?: string): Promise<Checkpoint> {
-  if (!await getAssignment(assignmentId)) throw new Error("Assignment not found");
+  if (!(await getAssignment(assignmentId))) throw new Error("Assignment not found");
   return save("checkpoints", { id: newId(), assignmentId, note, imagePath, createdAt: new Date() }, { parent_id: assignmentId });
 }
 export async function listCheckpoints(assignmentId: string): Promise<Checkpoint[]> {
-  return (await all<Checkpoint>("checkpoints")).filter((r) => r.parent_id === assignmentId).map((r) => checkpointFrom(r.payload));
+  const user = await account();
+  const colRef = collection(db, "users", user, "checkpoints");
+  const q = query(colRef, where("parent_id", "==", assignmentId));
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => checkpointFrom(d.data().payload as Checkpoint));
 }
 export async function listMaterials(): Promise<Material[]> {
   return (await all<Material>("materials")).map((r) => materialFrom(r.payload));
@@ -133,7 +206,6 @@ export async function getTodayLearningFocus(): Promise<LearningFocus | undefined
   return (await one<LearningFocus>("learning_focus", todayKey()))?.payload;
 }
 export async function refreshLearningFocus(): Promise<LearningFocus | undefined> {
-  // No generated mock recommendation: refresh current persisted focus only.
   return getTodayLearningFocus();
 }
 export async function saveLearningFocus(focus: LearningFocus): Promise<LearningFocus> {
@@ -144,7 +216,7 @@ export async function saveLearningFocus(focus: LearningFocus): Promise<LearningF
 export async function toggleFocusCheckpoint(checkpointId: string): Promise<LearningFocus | undefined> {
   const focus = await getTodayLearningFocus();
   if (!focus || !focus.checkpoints.some((c) => c.id === checkpointId)) return focus;
-  return saveLearningFocus({ ...focus, checkpoints: focus.checkpoints.map((c) => c.id === checkpointId ? { ...c, done: !c.done } : c) });
+  return saveLearningFocus({ ...focus, checkpoints: focus.checkpoints.map((c) => (c.id === checkpointId ? { ...c, done: !c.done } : c)) });
 }
 export async function listSkillNodes(): Promise<SkillNode[]> {
   return (await all<SkillNode>("skill_nodes")).map((r) => r.payload);
@@ -169,5 +241,12 @@ export async function switchRecommendationTopic(): Promise<Recommendation | unde
   const current = await getTodayRecommendation();
   if (!current?.alternatives.length) return current;
   const [next, ...rest] = current.alternatives;
-  return saveRecommendation({ ...current, topic: next.topic, tier: next.tier, minutes: next.minutes, alternatives: [...rest, { topic: current.topic, tier: current.tier, minutes: current.minutes }], generatedAt: new Date().toISOString() });
+  return saveRecommendation({
+    ...current,
+    topic: next.topic,
+    tier: next.tier,
+    minutes: next.minutes,
+    alternatives: [...rest, { topic: current.topic, tier: current.tier, minutes: current.minutes }],
+    generatedAt: new Date().toISOString(),
+  });
 }
