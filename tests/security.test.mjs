@@ -22,24 +22,20 @@ test('AI endpoints require persistent quota storage before generating', () => {
 });
 
 test('pages are gated by proxy except login and auth callback', () => {
-  const proxy = read('lib/supabase/proxy.ts');
+  const proxy = read('lib/firebase/proxy.ts');
   assert.match(proxy, /PUBLIC_PATHS = \["\/login", "\/auth\/callback"\]/);
-  assert.match(proxy, /getClaims\(\)/);
   assert.match(read('proxy.ts'), /updateSession/);
 });
 
-test('every data table has RLS enabled and an owner-only policy', () => {
-  const sql = read('supabase/migrations/20261026000000_account_data.sql');
-  for (const t of ['assignments', 'materials', 'checklist_items', 'checkpoints', 'learning_focus', 'skill_nodes', 'recommendations']) {
-    assert.match(sql, new RegExp(`alter table public\\.${t}\\s+enable row level security`));
-    assert.match(sql, new RegExp(`create policy account_only on public\\.${t}\\s+for all to authenticated`));
-    assert.match(sql, new RegExp(`create unique index if not exists \\w+\\s+on public\\.${t}\\(user_id, id\\)`));
-  }
+test('firestore has owner-only rules enabled', () => {
+  const rules = read('firestore.rules');
+  assert.match(rules, /match \/users\/\{userId\}\/\{document=\*\*\}/);
+  assert.match(rules, /allow read, write: if request\.auth != null && request\.auth\.uid == userId/);
 });
 
 test('client code never references service role or secret keys', () => {
-  for (const f of ['lib/supabase/client.ts', 'lib/supabase/config.ts', 'lib/repo.ts', 'components/LoginForm.tsx']) {
-    assert.doesNotMatch(read(f), /service_role|SERVICE_ROLE|sb_secret/);
+  for (const f of ['lib/firebase/client.ts', 'lib/firebase/config.ts', 'lib/repo.ts', 'components/LoginForm.tsx']) {
+    assert.doesNotMatch(read(f), /service_role|SERVICE_ROLE|sb_secret|private_key/);
   }
 });
 

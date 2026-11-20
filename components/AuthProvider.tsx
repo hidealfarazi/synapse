@@ -1,14 +1,14 @@
 /**
  * components/AuthProvider.tsx
- * Menyimpan siapa yang sedang login (untuk tampilan akun) dan mengembalikan ke /login
- * begitu sesi berakhir — di tab ini maupun tab lain. Keamanan data tetap di server:
- * proxy.ts (gerbang halaman) dan RLS Supabase (gerbang data).
+ * Menyimpan pengguna yang sedang aktif (Firebase Auth) dan mengelola sinkronisasi cookie sesi
+ * untuk server proxy.ts.
  */
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase/client";
+import { onAuthStateChanged, signOut as firebaseSignOut } from "firebase/auth";
+import { auth } from "@/lib/firebase/client";
 
 export interface AuthUser {
   id: string;
@@ -33,21 +33,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    // INITIAL_SESSION dipancarkan segera setelah subscribe, jadi tidak perlu getSession() terpisah.
-    const { data } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ? { id: session.user.id, email: session.user.email ?? null } : null);
-      setReady(true);
-      if (event === "SIGNED_OUT" && window.location.pathname !== "/login") {
-        router.replace("/login");
-        router.refresh();
+    const unsubscribe = onAuthStateChanged(auth, (fbUser) => {
+      if (fbUser) {
+        setUser({ id: fbUser.uid, email: fbUser.email ?? null });
+        // Simpan cookie sesi (30 hari) agar server proxy.ts mengizinkan akses halaman
+        document.cookie = `belajar_session=${fbUser.uid}; path=/; max-age=2592000; SameSite=Lax`;
+      } else {
+        setUser(null);
+        document.cookie = "belajar_session=; path=/; max-age=0; SameSite=Lax";
+        if (window.location.pathname !== "/login") {
+          router.replace("/login");
+          router.refresh();
+        }
       }
+      setReady(true);
     });
-    return () => data.subscription.unsubscribe();
+
+    return () => unsubscribe();
   }, [router]);
 
-  // scope "local": keluar dari perangkat ini saja, perangkat lain tetap masuk.
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut({ scope: "local" });
+    document.cookie = "belajar_session=; path=/; max-age=0; SameSite=Lax";
+    await firebaseSignOut(auth);
   }, []);
 
   const value = useMemo(() => ({ user, ready, signOut }), [user, ready, signOut]);

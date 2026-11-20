@@ -1,13 +1,15 @@
 /**
  * components/LoginForm.tsx
- * Masuk / daftar dengan email + kata sandi (Supabase Auth). Gaya sama dengan form lain:
- * label mono, kolom 52px radius 12px, tombol primer, konten tanpa kartu.
+ * Masuk / daftar dengan email + kata sandi (Firebase Auth).
+ * Label mono, kolom 52px radius 12px, tombol primer, konten tanpa kartu (BORDERLESS).
  */
 "use client";
 
 import { useId, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase/client";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
+import { auth } from "@/lib/firebase/client";
+import { getFirebaseConfig } from "@/lib/firebase/config";
 import { PageHead } from "@/components/PageHead";
 import { Button } from "@/components/ui/Button";
 
@@ -15,22 +17,22 @@ type Mode = "masuk" | "daftar";
 
 function friendlyError(err: { code?: string; message?: string }): string {
   switch (err.code) {
-    case "invalid_credentials":
+    case "auth/invalid-credential":
+    case "auth/wrong-password":
+    case "auth/user-not-found":
       return "Email atau kata sandi salah.";
-    case "email_not_confirmed":
-      return "Email belum dikonfirmasi. Cek kotak masukmu.";
-    case "user_already_exists":
-    case "email_exists":
+    case "auth/email-already-in-use":
       return "Email ini sudah terdaftar. Coba masuk.";
-    case "weak_password":
+    case "auth/weak-password":
       return "Kata sandi terlalu lemah. Pakai minimal 8 karakter.";
-    case "over_request_rate_limit":
-    case "over_email_send_rate_limit":
+    case "auth/too-many-requests":
       return "Terlalu sering mencoba. Tunggu sebentar lalu ulangi.";
-    case "signup_disabled":
-      return "Pendaftaran akun baru sedang dimatikan.";
+    case "auth/invalid-email":
+      return "Format email tidak valid.";
   }
-  if (err.message?.toLowerCase().includes("fetch")) return "Tidak bisa terhubung. Periksa koneksi internetmu.";
+  if (err.message?.toLowerCase().includes("network") || err.message?.toLowerCase().includes("fetch")) {
+    return "Tidak bisa terhubung. Periksa koneksi internetmu.";
+  }
   return "Terjadi kesalahan. Coba lagi.";
 }
 
@@ -125,34 +127,31 @@ export function LoginForm({ initialError }: { initialError?: string }) {
     if (busy) return;
     setError("");
     setNotice("");
+
+    const config = getFirebaseConfig();
+    if (!config.isConfigured) {
+      setError("Konfigurasi Firebase belum diisi di .env.local (lihat .env.example).");
+      return;
+    }
+
     if (password.length < 8) {
       setError("Kata sandi minimal 8 karakter.");
       return;
     }
+
     setBusy(true);
     try {
       const cleanEmail = email.trim();
       if (isSignup) {
-        const { data, error: err } = await supabase.auth.signUp({
-          email: cleanEmail,
-          password,
-          options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
-        });
-        if (err) throw err;
-        // Email sudah terdaftar + konfirmasi aktif: Supabase mengembalikan user tanpa identitas.
-        if (data.user && data.user.identities?.length === 0) {
-          setError("Email ini sudah terdaftar. Coba masuk.");
-          return;
-        }
-        if (!data.session) {
-          setNotice("Akun dibuat. Buka emailmu dan ketuk tautan konfirmasi, lalu masuk.");
-          setMode("masuk");
-          setPassword("");
-          return;
+        const userCred = await createUserWithEmailAndPassword(auth, cleanEmail, password);
+        if (userCred.user) {
+          document.cookie = `belajar_session=${userCred.user.uid}; path=/; max-age=2592000; SameSite=Lax`;
         }
       } else {
-        const { error: err } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
-        if (err) throw err;
+        const userCred = await signInWithEmailAndPassword(auth, cleanEmail, password);
+        if (userCred.user) {
+          document.cookie = `belajar_session=${userCred.user.uid}; path=/; max-age=2592000; SameSite=Lax`;
+        }
       }
       router.replace("/");
       router.refresh();
